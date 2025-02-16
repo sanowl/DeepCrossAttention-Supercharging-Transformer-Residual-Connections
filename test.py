@@ -3,15 +3,12 @@ import numpy as np
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 
-# Assuming the DCA implementation is in a file called dca_model.py
 from dca_model import DCATransformerPreTraining, TextDataset
+from utils.training_utils import create_optimizer_and_scheduler
 
 def create_synthetic_data(vocab_size=1000, seq_length=128, num_sequences=1000):
     """Create synthetic data for testing"""
-    # Create random sequences
-    data = np.random.randint(0, vocab_size, size=num_sequences * seq_length)
-    
-    # Split into train and validation
+    data = np.random.randint(0, vocab_size, size=num_sequences * seq_length)    
     train_size = int(0.8 * len(data))
     train_data = data[:train_size]
     val_data = data[train_size:]
@@ -96,11 +93,9 @@ def test_dca():
         total_steps=total_steps
     )
     
-    # Training loop
     print("Starting training...")
     train_losses = []
     val_perplexities = []
-    
     try:
         for epoch in range(epochs):
             model.train()
@@ -111,7 +106,7 @@ def test_dca():
                 
                 optimizer.zero_grad()
                 output = model(data)
-                loss = torch.nn.functional.cross_entropy(
+                loss = torch.nn.functional.cross_entropy(   
                     output.view(-1, output.size(-1)),
                     target.view(-1)
                 )
@@ -129,7 +124,6 @@ def test_dca():
                 
                 train_losses.append(loss.item())
             
-            # Validation
             model.eval()
             val_loss = 0
             with torch.no_grad():
@@ -148,19 +142,14 @@ def test_dca():
             print(f"Epoch {epoch+1}/{epochs}, "
                   f"Train Loss: {epoch_loss/len(train_loader):.4f}, "
                   f"Val PPL: {val_ppl:.2f}")
-        
-        # Plot training progress
+    
         plot_training_progress(train_losses, val_perplexities)
-        
-        # Save model
         torch.save(model.state_dict(), 'dca_test_model.pt')
         print("Training completed successfully!")
-        
-        # Test model generation
         print("\nTesting model generation:")
         model.eval()
         with torch.no_grad():
-            # Generate starting sequence
+    
             start_seq = torch.randint(0, vocab_size, (1, 10)).to(device)
             output = model(start_seq)
             next_token = torch.argmax(output[:, -1, :], dim=-1)
